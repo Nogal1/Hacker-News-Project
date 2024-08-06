@@ -25,6 +25,10 @@ const $navLogOut = $("#nav-logout");
 
 const $userProfile = $("#user-profile");
 
+// for infinite scroll
+let lastStoryLoaded = 0;
+const STORIES_PER_LOAD = 10;
+
 /** To make it easier for individual components to show just themselves, this
  * is a useful function that hides pretty much everything on the page. After
  * calling this, individual components can re-show just what they want.
@@ -52,6 +56,13 @@ async function start() {
 
   // if we got a logged-in user
   if (currentUser) updateUIOnUserLogin();
+
+  // setup infinite scroll
+  $(window).on('scroll', async function () {
+    if ($(window).scrollTop() + $(window).height() > $(document).height() - 100) {
+      await loadMoreStories();
+    }
+  });
 }
 
 // Once the DOM is entirely loaded, begin the app
@@ -61,3 +72,10 @@ console.warn("HEY STUDENT: This program sends many debug messages to" +
   " seeing those helpful debug messages. In your browser console, click on" +
   " menu 'Default Levels' and add Verbose");
 $(start);
+
+/** Function to load more stories for infinite scroll */
+async function loadMoreStories() {
+  const newStories = await storyList.getMoreStories(lastStoryLoaded, STORIES_PER_LOAD);
+  lastStoryLoaded += STORIES_PER_LOAD;
+  putStoriesOnPage(newStories);
+}

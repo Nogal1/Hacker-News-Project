@@ -108,6 +108,55 @@ class StoryList {
     user.ownStories = user.ownStories.filter(s => s.storyId !== storyId);
     user.favorites = user.favorites.filter(s => s.storyId !== storyId);
   }
+
+  /** Edit story data in API and update the story list.
+   *
+   * - user: the current User instance
+   * - storyId: the ID of the story you want to edit
+   * - updatedData: object containing updated story data {title, author, url}
+   *
+   * Returns the updated Story instance
+   */
+
+  async editStory(user, storyId, updatedData) {
+    const token = user.loginToken;
+    const response = await axios({
+      method: "PATCH",
+      url: `${BASE_URL}/stories/${storyId}`,
+      data: { token, story: updatedData },
+    });
+
+    const updatedStory = new Story(response.data.story);
+
+    // update the story in the story list
+    const storyIndex = this.stories.findIndex(story => story.storyId === storyId);
+    this.stories[storyIndex] = updatedStory;
+
+    // update the story in the user's own stories list
+    const userStoryIndex = user.ownStories.findIndex(story => story.storyId === storyId);
+    user.ownStories[userStoryIndex] = updatedStory;
+
+    return updatedStory;
+  }
+
+  /** Get more stories for infinite scroll.
+   *
+   * - offset: the number of stories already loaded
+   * - limit: the number of stories to load
+   *
+   * Returns an array of Story instances
+   */
+
+  async getMoreStories(offset, limit) {
+    const response = await axios({
+      url: `${BASE_URL}/stories?skip=${offset}&limit=${limit}`,
+      method: "GET",
+    });
+
+    const stories = response.data.stories.map(story => new Story(story));
+    this.stories.push(...stories);
+    return stories;
+  }
 }
 
 
@@ -149,24 +198,33 @@ class User {
    */
 
   static async signup(username, password, name) {
-    const response = await axios({
-      url: `${BASE_URL}/signup`,
-      method: "POST",
-      data: { user: { username, password, name } },
-    });
+    try {
+      const response = await axios({
+        url: `${BASE_URL}/signup`,
+        method: "POST",
+        data: { user: { username, password, name } },
+      });
 
-    let { user } = response.data;
+      let { user } = response.data;
 
-    return new User(
-      {
-        username: user.username,
-        name: user.name,
-        createdAt: user.createdAt,
-        favorites: user.favorites,
-        ownStories: user.stories
-      },
-      response.data.token
-    );
+      return new User(
+        {
+          username: user.username,
+          name: user.name,
+          createdAt: user.createdAt,
+          favorites: user.favorites,
+          ownStories: user.stories
+        },
+        response.data.token
+      );
+    } catch (err) {
+      if (err.response.status === 409) {
+        alert("Username is already taken. Please choose a different one.");
+      } else {
+        alert("An error occurred. Please try again.");
+      }
+      throw err;
+    }
   }
 
   /** Login in user with API, make User instance & return it.
@@ -176,24 +234,33 @@ class User {
    */
 
   static async login(username, password) {
-    const response = await axios({
-      url: `${BASE_URL}/login`,
-      method: "POST",
-      data: { user: { username, password } },
-    });
+    try {
+      const response = await axios({
+        url: `${BASE_URL}/login`,
+        method: "POST",
+        data: { user: { username, password } },
+      });
 
-    let { user } = response.data;
+      let { user } = response.data;
 
-    return new User(
-      {
-        username: user.username,
-        name: user.name,
-        createdAt: user.createdAt,
-        favorites: user.favorites,
-        ownStories: user.stories
-      },
-      response.data.token
-    );
+      return new User(
+        {
+          username: user.username,
+          name: user.name,
+          createdAt: user.createdAt,
+          favorites: user.favorites,
+          ownStories: user.stories
+        },
+        response.data.token
+      );
+    } catch (err) {
+      if (err.response.status === 401) {
+        alert("Incorrect username or password. Please try again.");
+      } else {
+        alert("An error occurred. Please try again.");
+      }
+      throw err;
+    }
   }
 
   /** When we already have credentials (token & username) for a user,
@@ -263,5 +330,18 @@ class User {
 
   isFavorite(story) {
     return this.favorites.some(s => (s.storyId === story.storyId));
+  }
+
+  /** Update user profile information (name and/or password) */
+  async updateProfile({ name, password }) {
+    const token = this.loginToken;
+    const response = await axios({
+      url: `${BASE_URL}/users/${this.username}`,
+      method: "PATCH",
+      data: { token, user: { name, password } },
+    });
+
+    this.name = response.data.user.name;
+    return response.data.user;
   }
 }

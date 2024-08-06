@@ -39,6 +39,7 @@ function generateStoryMarkup(story, showDeleteBtn = false) {
         <small class="story-hostname">(${hostName})</small>
         <div class="story-author">by ${story.author}</div>
         <div class="story-user">posted by ${story.username}</div>
+        ${showDeleteBtn ? getEditBtnHTML() : ""}
         </div>
       </li>
     `);
@@ -50,6 +51,15 @@ function getDeleteBtnHTML() {
   return `
       <span class="trash-can">
         <i class="fas fa-trash-alt"></i>
+      </span>`;
+}
+
+/** Make edit button HTML for story */
+
+function getEditBtnHTML() {
+  return `
+      <span class="edit-story">
+        <i class="fas fa-edit"></i>
       </span>`;
 }
 
@@ -120,6 +130,29 @@ async function submitNewStory(evt) {
 }
 
 $submitForm.on("submit", submitNewStory);
+
+/** Handle editing a story */
+
+async function editStory(evt) {
+  console.debug("editStory");
+
+  const $closestLi = $(evt.target).closest("li");
+  const storyId = $closestLi.attr("id");
+
+  const title = prompt("Enter new title");
+  const author = prompt("Enter new author");
+  const url = prompt("Enter new URL");
+
+  if (title && author && url) {
+    const updatedData = { title, author, url };
+    await storyList.editStory(currentUser, storyId, updatedData);
+
+    // re-generate story list
+     putUserStoriesOnPage();
+  }
+}
+
+$ownStories.on("click", ".edit-story", editStory);
 
 /******************************************************************************
  * Functionality for list of user's own stories

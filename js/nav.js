@@ -53,6 +53,7 @@ function navLoginClick(evt) {
   hidePageComponents();
   $loginForm.show();
   $signupForm.show();
+  $storiesContainer.hide()
 }
 
 $navLogin.on("click", navLoginClick);
@@ -71,7 +72,7 @@ $navUserProfile.on("click", navProfileClick);
 
 function updateNavOnLogin() {
   console.debug("updateNavOnLogin");
-  $(".main-nav-links").show();
+  $(".main-nav-links").css('display', 'flex');;
   $navLogin.hide();
   $navLogOut.show();
   $navUserProfile.text(`${currentUser.username}`).show();

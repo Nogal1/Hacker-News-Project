@@ -19,16 +19,12 @@ async function login(evt) {
 
   // User.login retrieves user info from API and returns User instance
   // which we'll make the globally-available, logged-in user.
-  try {
-    currentUser = await User.login(username, password);
+  currentUser = await User.login(username, password);
 
-    $loginForm.trigger("reset");
+  $loginForm.trigger("reset");
 
-    saveUserCredentialsInLocalStorage();
-    updateUIOnUserLogin();
-  } catch (error) {
-    alert("Incorrect username or password.");
-  }
+  saveUserCredentialsInLocalStorage();
+  updateUIOnUserLogin();
 }
 
 $loginForm.on("submit", login);
@@ -45,16 +41,12 @@ async function signup(evt) {
 
   // User.signup retrieves user info from API and returns User instance
   // which we'll make the globally-available, logged-in user.
-  try {
-    currentUser = await User.signup(username, password, name);
+  currentUser = await User.signup(username, password, name);
 
-    saveUserCredentialsInLocalStorage();
-    updateUIOnUserLogin();
+  saveUserCredentialsInLocalStorage();
+  updateUIOnUserLogin();
 
-    $signupForm.trigger("reset");
-  } catch (error) {
-    alert("Username is taken");
-  }
+  $signupForm.trigger("reset");
 }
 
 $signupForm.on("submit", signup);
@@ -105,7 +97,7 @@ function saveUserCredentialsInLocalStorage() {
 }
 
 /******************************************************************************
- * General UI stuff about users
+ * General UI stuff about users & profiles
  */
 
 /** When a user signs up or registers, we want to set up the UI for them:
@@ -126,6 +118,7 @@ async function updateUIOnUserLogin() {
 
   updateNavOnLogin();
   generateUserProfile();
+  $storiesContainer.show()
 }
 
 /** Show a "user profile" part of page built from the current user's info. */
